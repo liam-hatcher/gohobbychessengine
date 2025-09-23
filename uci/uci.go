@@ -3,9 +3,12 @@ package uci
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/liam-hatcher/gohobbyengine/chess"
 )
 
 const (
@@ -46,15 +49,32 @@ func LogCommand(prefix, message string) {
 	fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", timestamp, prefix, message)
 }
 
-func (e *Engine) HandleGo() string {
+func (e *Engine) HandleGo(p *chess.Position) string {
 	if e.EngineColor == White {
-		return "b2b3"
+		// play some random pawn moves for now
+		moves := p.GenerateWhitePawnMoves()
+		uciMoves := make([]string, len(moves))
+		for i, m := range moves {
+			uciMoves[i] = chess.ToUCINotation(m)
+		}
+
+		LogCommand("DEBUG", fmt.Sprintf("%+v\n", uciMoves))
+
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		randomIndex := r.Intn(len(uciMoves))
+
+		randMove := uciMoves[randomIndex]
+		p.ApplyMove(uciMoves[randomIndex])
+
+		LogCommand("BLACK Pawns: ", fmt.Sprintf("%d", p.BlackPawns))
+		return randMove
 	} else {
+		// dummy move for black right now=
 		return "h7h6"
 	}
 }
 
-func (e *Engine) Run() {
+func (e *Engine) Run(p *chess.Position) {
 	scanner := bufio.NewScanner(os.Stdin)
 	writer := bufio.NewWriter(os.Stdout)
 
@@ -86,16 +106,20 @@ func (e *Engine) Run() {
 			e.FirstMoveDone = false
 			e.EngineColor = NotInitialized
 		case "position":
+			e.MoveHistory = getUCIMoves(fields)
 			if e.EngineColor == NotInitialized {
-				e.MoveHistory = getUCIMoves(fields)
 				if len(e.MoveHistory)%2 == 0 {
 					e.EngineColor = White
 				} else {
 					e.EngineColor = Black
 				}
 			}
+			if len(e.MoveHistory) > 0 {
+				lastMove := e.MoveHistory[len(e.MoveHistory)-1]
+				p.ApplyMove(lastMove)
+			}
 		case "go":
-			move := e.HandleGo()
+			move := e.HandleGo(p)
 			if move != "" {
 				flush("bestmove " + move)
 			}
