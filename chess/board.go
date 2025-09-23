@@ -44,6 +44,14 @@ func NewPosition() *Position {
 	}
 }
 
+func (p *Position) WhitePieces() Bitboard {
+	return p.WhiteBishops | p.WhiteKing | p.WhiteKnights | p.WhitePawns | p.WhiteRooks | p.WhiteQueens
+}
+
+func (p *Position) BlackPieces() Bitboard {
+	return p.BlackBishops | p.BlackKing | p.BlackKnights | p.BlackPawns | p.BlackRooks | p.BlackQueens
+}
+
 func (p *Position) SetPiece(piece, square string) {
 	index := rankFileToBitIndex(square[0], square[1])
 	mask := Bitboard(1) << index
@@ -83,8 +91,7 @@ func (p *Position) SetPiece(piece, square string) {
 }
 
 func (p *Position) GetOccupiedSquares() Bitboard {
-	return p.WhiteBishops | p.WhiteKing | p.WhiteKnights | p.WhitePawns | p.WhitePawns | p.WhiteQueens |
-		p.BlackBishops | p.BlackKing | p.BlackKnights | p.BlackPawns | p.BlackPawns | p.BlackQueens
+	return p.WhitePieces() | p.BlackPieces()
 }
 
 func (p *Position) GetEmptySquares() Bitboard {

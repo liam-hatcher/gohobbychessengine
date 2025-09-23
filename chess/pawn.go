@@ -63,6 +63,55 @@ func (p *Position) GenerateBlackPawnMoves() []Move {
 	return moves
 }
 
+func (p *Position) GenerateWhitePawnCaptures() []Move {
+	var moves []Move
+
+	aFile := Bitboard(0x0101010101010101)
+	leftCaptures := ((p.WhitePawns &^ aFile) << 7) & p.BlackPieces()
+
+	for leftCaptures != 0 {
+		to := bits.TrailingZeros64(uint64(leftCaptures))
+		from := to - 7
+		moves = append(moves, Move{From: from, To: to})
+		leftCaptures &= leftCaptures - 1
+	}
+
+	hFile := Bitboard(0x8080808080808080)
+	rightCaptures := ((p.WhitePawns &^ hFile) << 9) & p.BlackPieces()
+	for rightCaptures != 0 {
+		to := bits.TrailingZeros64(uint64(rightCaptures))
+		from := to - 9
+		moves = append(moves, Move{From: from, To: to})
+		rightCaptures &= rightCaptures - 1
+	}
+
+	return moves
+}
+
+func (p *Position) GenerateBlackPawnCaptures() []Move {
+	var moves []Move
+
+	aFile := Bitboard(0x0101010101010101)
+	leftCaptures := ((p.BlackPawns &^ aFile) >> 9) & p.WhitePieces()
+	for leftCaptures != 0 {
+		to := bits.TrailingZeros64(uint64(leftCaptures))
+		from := to + 9
+		moves = append(moves, Move{From: from, To: to})
+		leftCaptures &= leftCaptures - 1
+	}
+
+	hFile := Bitboard(0x8080808080808080)
+	rightCaptures := ((p.BlackPawns &^ hFile) >> 7) & p.WhitePieces()
+	for rightCaptures != 0 {
+		to := bits.TrailingZeros64(uint64(rightCaptures))
+		from := to + 7
+		moves = append(moves, Move{From: from, To: to})
+		rightCaptures &= rightCaptures - 1
+	}
+
+	return moves
+}
+
 func (p *Position) GenerateBlackPawnPushes() Bitboard {
 	emptySquares := ^p.GetEmptySquares()
 
