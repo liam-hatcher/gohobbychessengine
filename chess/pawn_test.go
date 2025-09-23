@@ -107,7 +107,7 @@ func TestBlockedPawnMoves(t *testing.T) {
 	}
 }
 
-func TestWhitePawnCaptures(t *testing.T) {
+func TestGenerateWhitePawnCaptures(t *testing.T) {
 	pos := Position{}
 	pos.SetPiece("P", "d4")
 	pos.SetPiece("p", "e5")
@@ -152,7 +152,7 @@ func TestWhitePawnCaptures(t *testing.T) {
 	}
 }
 
-func TestBlackPawnCaptures(t *testing.T) {
+func TestGenerateBlackPawnCaptures(t *testing.T) {
 	pos := Position{}
 	pos.SetPiece("p", "d5")
 	pos.SetPiece("P", "e4")
@@ -196,3 +196,36 @@ func TestBlackPawnCaptures(t *testing.T) {
 		t.Errorf("expected capture move %s but got %s", expected, move)
 	}
 }
+
+func TestGenerateWhitePawnEnPassant(t *testing.T) {
+	// right capture en passant
+	pos := Position{}
+	pos.SetPiece("P", "d5")
+	pos.SetEnPassantTarget("e6")
+
+	moves := pos.GenerateWhitePawnCaptures()
+
+	expected := "d5e6"
+	actual := ToUCINotation(moves[0])
+
+	if actual != expected {
+		t.Errorf("expected %s but got %s", expected, actual)
+	}
+
+	// left capture en passant
+	pos = Position{}
+	pos.SetPiece("P", "d5")
+	pos.SetEnPassantTarget("c6")
+
+	moves = pos.GenerateWhitePawnCaptures()
+
+	expected = "d5c6"
+	actual = ToUCINotation(moves[0])
+
+	if actual != expected {
+		t.Errorf("expected %s but got %s", expected, actual)
+	}
+}
+
+// TODO: add tests that test making the captures and updating
+//  the position, instead of just generating them.

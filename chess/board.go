@@ -24,6 +24,8 @@ type Position struct {
 	BlackRooks   Bitboard
 	BlackQueens  Bitboard
 	BlackKing    Bitboard
+
+	EnPassantTarget Bitboard
 }
 
 func NewPosition() *Position {
@@ -41,6 +43,8 @@ func NewPosition() *Position {
 		BlackBishops: 0x2400000000000000,
 		BlackQueens:  0x0800000000000000,
 		BlackKing:    0x1000000000000000,
+
+		EnPassantTarget: 0,
 	}
 }
 
@@ -53,7 +57,7 @@ func (p *Position) BlackPieces() Bitboard {
 }
 
 func (p *Position) SetPiece(piece, square string) {
-	index := rankFileToBitIndex(square[0], square[1])
+	index := RankFileToBitIndex(square[0], square[1])
 	mask := Bitboard(1) << index
 
 	if mask&p.GetOccupiedSquares() != 0 {
@@ -90,6 +94,10 @@ func (p *Position) SetPiece(piece, square string) {
 	}
 }
 
+func (p *Position) SetEnPassantTarget(square string) {
+	p.EnPassantTarget = 1 << RankFileToBitIndex(square[0], square[1])
+}
+
 func (p *Position) GetOccupiedSquares() Bitboard {
 	return p.WhitePieces() | p.BlackPieces()
 }
@@ -104,7 +112,7 @@ func BitIndexToRankFile(index int) string {
 	return string(rune('a'+file)) + string(rune('1'+rank))
 }
 
-func rankFileToBitIndex(file byte, rank byte) int {
+func RankFileToBitIndex(file byte, rank byte) int {
 	return int((rank-'1')*8 + (file - 'a'))
 }
 
@@ -116,8 +124,8 @@ func ToUCINotation(move Move) string {
 }
 
 func parseMove(move string) (from, to, promotionType int) {
-	from = rankFileToBitIndex(move[0], move[1])
-	to = rankFileToBitIndex(move[2], move[3])
+	from = RankFileToBitIndex(move[0], move[1])
+	to = RankFileToBitIndex(move[2], move[3])
 	promotionType = -1 // figure out how to handle this later when implementing promotions
 	return
 }
@@ -126,9 +134,11 @@ func (p *Position) applyPawnMove(fromMask, toMask Bitboard) {
 	if p.WhitePawns&fromMask != 0 {
 		p.WhitePawns &^= fromMask
 		p.WhitePawns |= toMask
+		p.EnPassantTarget = 1 << (fromMask + 8)
 	} else if p.BlackPawns&fromMask != 0 {
 		p.BlackPawns &^= fromMask
 		p.BlackPawns |= toMask
+		p.EnPassantTarget = 1 << (fromMask - 8)
 	}
 }
 
@@ -140,6 +150,7 @@ func (p *Position) applyPawnMove(fromMask, toMask Bitboard) {
 // Handle captures: if the destination square was occupied by an opponent’s piece, clear that square from the opponent’s bitboard.
 // Handle promotions, castling, and en passant (later).
 func (p *Position) ApplyMove(move string) {
+
 	from, to, _ := parseMove(move)
 	fromMask := Bitboard(1) << from
 	toMask := Bitboard(1) << to
