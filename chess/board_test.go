@@ -1,6 +1,7 @@
 package chess
 
 import (
+	"fmt"
 	"strconv"
 	"testing"
 )
@@ -10,16 +11,16 @@ func assertEmpty(t *testing.T, pos *Position, square string) {
 	piece, empty := pos.GetPieceOnSquare(square)
 
 	if !empty {
-		t.Errorf("Expected %s to be empty, but found %s", square, piece)
+		t.Errorf("Expected %s to be empty, but found %c", square, piece)
 	}
 }
 
-func assertHasPiece(t *testing.T, pos *Position, expected string, square string) {
+func assertHasPiece(t *testing.T, pos *Position, expected byte, square string) {
 	t.Helper()
 
 	piece, empty := pos.GetPieceOnSquare(square)
 	if piece != expected {
-		t.Errorf("expected to find piece %s on %s", expected, square)
+		t.Errorf("expected to find piece %c on %s", expected, square)
 	}
 	if empty {
 		t.Errorf("expected square %s to be occupied", square)
@@ -36,19 +37,19 @@ func assertHasPiece(t *testing.T, pos *Position, expected string, square string)
 func TestBitboardPieceMapSynchronization(t *testing.T) {
 	pos := Position{}
 
-	pieces := map[string]*Bitboard{
-		"P": &pos.WhitePawns,
-		"R": &pos.WhiteRooks,
-		"N": &pos.WhiteKnights,
-		"B": &pos.WhiteBishops,
-		"Q": &pos.WhiteQueens,
-		"K": &pos.WhiteKing,
-		"p": &pos.BlackPawns,
-		"r": &pos.BlackRooks,
-		"n": &pos.BlackKnights,
-		"b": &pos.BlackBishops,
-		"q": &pos.BlackQueens,
-		"k": &pos.BlackKing,
+	pieces := map[byte]*Bitboard{
+		'P': &pos.WhitePawns,
+		'R': &pos.WhiteRooks,
+		'N': &pos.WhiteKnights,
+		'B': &pos.WhiteBishops,
+		'Q': &pos.WhiteQueens,
+		'K': &pos.WhiteKing,
+		'p': &pos.BlackPawns,
+		'r': &pos.BlackRooks,
+		'n': &pos.BlackKnights,
+		'b': &pos.BlackBishops,
+		'q': &pos.BlackQueens,
+		'k': &pos.BlackKing,
 	}
 
 	for file := 'a'; file <= 'h'; file++ {
@@ -57,20 +58,20 @@ func TestBitboardPieceMapSynchronization(t *testing.T) {
 				square := string(file) + strconv.Itoa(rank)
 				assertEmpty(t, &pos, square)
 				if *bb != 0 {
-					t.Errorf("expected Bitboard for %s to be empty", piece)
+					t.Errorf("expected Bitboard for %c to be empty", piece)
 				}
 
 				pos.SetPiece(piece, square)
 				assertHasPiece(t, &pos, piece, square)
 				if *bb == 0 {
-					t.Errorf("expected Bitboard for %s to NOT be empty", piece)
-					t.Errorf("failed to place %s on %s", piece, square)
+					t.Errorf("expected Bitboard for %c to NOT be empty", piece)
+					t.Errorf("failed to place %c on %s", piece, square)
 				}
 
 				pos.RemovePiece(square)
 				assertEmpty(t, &pos, square)
 				if *bb != 0 {
-					t.Errorf("expected Bitboard for %s to be empty after removal on %s", piece, square)
+					t.Errorf("expected Bitboard for %c to be empty after removal on %s", piece, square)
 				}
 			}
 		}
@@ -86,13 +87,13 @@ func TestWhitePawnSinglePushes(t *testing.T) {
 			from := string(file) + strconv.Itoa(rank)
 			to := string(file) + strconv.Itoa(rank+1)
 
-			pos.SetPiece("P", from)
+			pos.SetPiece('P', from)
 			assertEmpty(t, &pos, to)           // target square is empty
-			assertHasPiece(t, &pos, "P", from) // origin square has a Pawn
+			assertHasPiece(t, &pos, 'P', from) // origin square has a Pawn
 
 			pos.ApplyMove(from + to)
 			assertEmpty(t, &pos, from)       // origin square is now empty
-			assertHasPiece(t, &pos, "P", to) // target sqaure has a pawn
+			assertHasPiece(t, &pos, 'P', to) // target sqaure has a pawn
 		}
 	}
 }
@@ -106,13 +107,13 @@ func TestBlackPawnSinglePushes(t *testing.T) {
 			from := string(file) + strconv.Itoa(rank)
 			to := string(file) + strconv.Itoa(rank-1)
 
-			pos.SetPiece("p", from)
+			pos.SetPiece('p', from)
 			assertEmpty(t, &pos, to)           // target square is empty
-			assertHasPiece(t, &pos, "p", from) // origin square has a Pawn
+			assertHasPiece(t, &pos, 'p', from) // origin square has a Pawn
 
 			pos.ApplyMove(from + to)
 			assertEmpty(t, &pos, from)       // origin square is now empty
-			assertHasPiece(t, &pos, "p", to) // target sqaure has a pawn
+			assertHasPiece(t, &pos, 'p', to) // target sqaure has a pawn
 		}
 	}
 }
@@ -123,52 +124,111 @@ func TestPawnDoublePushes(t *testing.T) {
 		pos := Position{}
 		from := string(file) + "2"
 		to := string(file) + "4"
-		pos.SetPiece("P", from)
+		pos.SetPiece('P', from)
 
 		assertEmpty(t, &pos, to)
-		assertHasPiece(t, &pos, "P", from)
+		assertHasPiece(t, &pos, 'P', from)
 		pos.ApplyMove(from + to)
 		assertEmpty(t, &pos, from)
-		assertHasPiece(t, &pos, "P", to)
+		assertHasPiece(t, &pos, 'P', to)
 
 		// black pawns
-		pos = Position{
-			BlackPawns: 0,
-			PieceMap:   [64]string{},
-		}
+		pos = Position{}
 		from = string(file) + "7"
 		to = string(file) + "5"
-		pos.SetPiece("p", from)
+		pos.SetPiece('p', from)
 		assertEmpty(t, &pos, to)
-		assertHasPiece(t, &pos, "p", from)
+		assertHasPiece(t, &pos, 'p', from)
 		pos.ApplyMove(from + to)
 		assertEmpty(t, &pos, from)
-		assertHasPiece(t, &pos, "p", to)
+		assertHasPiece(t, &pos, 'p', to)
 	}
 }
 
-// TODO: add more test cases
 func TestWhitePawnCaptures(t *testing.T) {
-	pos := Position{}
-	pos.SetPiece("P", "e4")
-	pos.SetPiece("p", "d5")
+	pieces := []byte{'p', 'r', 'b', 'n', 'q'}
 
-	if pos.BlackPawns == 0 {
-		t.Errorf("black pawn bit should be set")
+	testCaptures := func(file rune, rank int, dir int) {
+		from := fmt.Sprintf("%c%d", file, rank)
+		to := fmt.Sprintf("%c%d", file+rune(dir), rank+1)
+
+		t.Run(
+			fmt.Sprintf("capture move %s%s", from, to),
+			func(t *testing.T) {
+				for _, piece := range pieces {
+					pos := Position{}
+					pos.SetPiece('P', from)
+					pos.SetPiece(piece, to)
+					pos.ApplyMove(from + to)
+
+					if pos.BlackPieces() != 0 {
+						t.Errorf("failed to capture %c on %s", piece, to)
+					}
+				}
+			})
 	}
 
-	pos.ApplyMove("e4d5")
-	assertEmpty(t, &pos, "e4")
-	assertHasPiece(t, &pos, "P", "d5")
-	if pos.BlackPawns != 0 {
-		t.Errorf("failed to update bitboard")
+	// right captures
+	for file := 'a'; file < 'h'; file++ {
+		// will test captures on the back rank in a seperate test
+		for rank := 2; rank < 7; rank++ {
+			testCaptures(file, rank, 1)
+		}
+	}
+
+	// left captures
+	for file := 'b'; file <= 'h'; file++ {
+		// will test captures on the back rank in a seperate test
+		for rank := 2; rank < 7; rank++ {
+			testCaptures(file, rank, -1)
+		}
+	}
+}
+
+func TestBlackPawnCaptures(t *testing.T) {
+	pieces := []byte{'P', 'R', 'B', 'N', 'Q'}
+
+	testCaptures := func(file rune, rank int, dir int) {
+		from := fmt.Sprintf("%c%d", file, rank)
+		to := fmt.Sprintf("%c%d", file+rune(dir), rank-1)
+
+		t.Run(
+			fmt.Sprintf("capture move %s%s", from, to),
+			func(t *testing.T) {
+				for _, piece := range pieces {
+					pos := Position{}
+					pos.SetPiece('p', from)
+					pos.SetPiece(piece, to)
+					pos.ApplyMove(from + to)
+
+					if pos.WhitePieces() != 0 {
+						t.Errorf("failed to capture %c on %s", piece, to)
+					}
+				}
+			})
+	}
+
+	// right captures
+	for file := 'a'; file < 'h'; file++ {
+		// will test captures on the back rank in a seperate test
+		for rank := 7; rank > 2; rank-- {
+			testCaptures(file, rank, 1)
+		}
+	}
+
+	// left captures
+	for file := 'b'; file <= 'h'; file++ {
+		// will test captures on the back rank in a seperate test
+		for rank := 7; rank > 2; rank-- {
+			testCaptures(file, rank, -1)
+		}
 	}
 }
 
 func TestWhitePawnEnPassant(t *testing.T) {
 	pos := Position{}
-	pos.SetPiece("P", "e5")
-	pos.SetPiece("p", "d7")
+	pos.SetPiece('P', "e5")
+	pos.SetPiece('p', "d7")
 	pos.ApplyMove("d7d5")
 
 	assertEmpty(t, &pos, "d7")
@@ -178,7 +238,7 @@ func TestWhitePawnEnPassant(t *testing.T) {
 
 	pos.ApplyMove("e5d6")
 	assertEmpty(t, &pos, "d5")
-	assertHasPiece(t, &pos, "P", "d6")
+	assertHasPiece(t, &pos, 'P', "d6")
 	if pos.BlackPawns != 0 {
 		t.Errorf("failed to update bitboard")
 	}
@@ -189,8 +249,8 @@ func TestWhitePawnEnPassant(t *testing.T) {
 
 func TestBlackPawnEnPassant(t *testing.T) {
 	pos := Position{}
-	pos.SetPiece("p", "d4")
-	pos.SetPiece("P", "e2")
+	pos.SetPiece('p', "d4")
+	pos.SetPiece('P', "e2")
 	pos.ApplyMove("e2e4")
 
 	assertEmpty(t, &pos, "e2")
@@ -200,11 +260,105 @@ func TestBlackPawnEnPassant(t *testing.T) {
 
 	pos.ApplyMove("d4e3")
 	assertEmpty(t, &pos, "e4")
-	assertHasPiece(t, &pos, "p", "e3")
+	assertHasPiece(t, &pos, 'p', "e3")
 	if pos.WhitePawns != 0 {
 		t.Errorf("failed to update bitboard")
 	}
 	if pos.EnPassantTarget != 0 {
 		t.Errorf("failed to clear en passant target square")
+	}
+}
+
+func TestPawnPromotions(t *testing.T) {
+	promotions := [4]byte{'q', 'r', 'b', 'n'}
+
+	tests := []struct {
+		color     string
+		pawn      byte
+		startRank int
+		endRank   int
+	}{
+		{"white", 'P', 7, 8},
+		{"black", 'p', 2, 1},
+	}
+
+	for _, test := range tests {
+		for file := 'a'; file <= 'h'; file++ {
+			for _, promo := range promotions {
+				from := fmt.Sprintf("%c%d", file, test.startRank)
+				to := fmt.Sprintf("%c%d", file, test.endRank)
+				move := from + to + string(promo)
+
+				t.Run(fmt.Sprintf("%s pawn promotion %s", test.color, move), func(t *testing.T) {
+					pos := Position{} // init inside the test
+					pos.SetPiece(test.pawn, from)
+					pos.ApplyMove(move)
+
+					assertEmpty(t, &pos, from)
+
+					// check pawn bitboard
+					if test.pawn == 'P' && pos.WhitePawns != 0 {
+						t.Errorf("expected white pawns bitboard to be empty")
+					} else if test.pawn == 'p' && pos.BlackPawns != 0 {
+						t.Errorf("expected black pawns bitboard to be empty")
+					}
+
+					piece := promo
+					if test.pawn == 'P' {
+						piece = ToUpper(promo)
+					}
+
+					assertHasPiece(t, &pos, piece, to)
+
+					// check the right promoted piece bitboard
+					var bb Bitboard
+					switch promo {
+					case 'q':
+						if test.color == "white" {
+							bb = pos.WhiteQueens
+						} else {
+							bb = pos.BlackQueens
+						}
+					case 'r':
+						if test.color == "white" {
+							bb = pos.WhiteRooks
+						} else {
+							bb = pos.BlackRooks
+						}
+					case 'b':
+						if test.color == "white" {
+							bb = pos.WhiteBishops
+						} else {
+							bb = pos.BlackBishops
+						}
+					case 'n':
+						if test.color == "white" {
+							bb = pos.WhiteKnights
+						} else {
+							bb = pos.BlackKnights
+						}
+					}
+
+					if bb == 0 {
+						t.Errorf("expected %c bitboard to be set", piece)
+					}
+				})
+			}
+		}
+	}
+}
+
+func TestPawnCaptureAndPromote(t *testing.T) {
+	pos := Position{}
+	pos.SetPiece('n', "c8")
+	pos.SetPiece('P', "b7")
+	pos.ApplyMove("b7c8q")
+
+	if pos.WhitePawns != 0 {
+		t.Errorf("expected white pawn bitboard to be empty")
+	}
+	assertHasPiece(t, &pos, 'Q', "c8")
+	if pos.WhiteQueens == 0 {
+		t.Errorf("expected white queen bitboard to be set")
 	}
 }

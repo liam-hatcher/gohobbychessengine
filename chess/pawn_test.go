@@ -83,8 +83,8 @@ func TestGenerateOpeningPawnMoves_Black(t *testing.T) {
 
 func TestGenerateBlockedPawnMoves(t *testing.T) {
 	pos := Position{}
-	pos.SetPiece("P", "e4")
-	pos.SetPiece("n", "e5")
+	pos.SetPiece('P', "e4")
+	pos.SetPiece('n', "e5")
 	moves := pos.GenerateWhitePawnMoves()
 
 	if len(moves) != 0 {
@@ -97,8 +97,8 @@ func TestGenerateBlockedPawnMoves(t *testing.T) {
 	}
 
 	pos = Position{}
-	pos.SetPiece("p", "d7")
-	pos.SetPiece("Q", "d6")
+	pos.SetPiece('p', "d7")
+	pos.SetPiece('Q', "d6")
 
 	moves = pos.GenerateBlackPawnMoves()
 
@@ -109,9 +109,9 @@ func TestGenerateBlockedPawnMoves(t *testing.T) {
 
 func TestGenerateWhitePawnCaptures(t *testing.T) {
 	pos := Position{}
-	pos.SetPiece("P", "d4")
-	pos.SetPiece("p", "e5")
-	pos.SetPiece("r", "c5")
+	pos.SetPiece('P', "d4")
+	pos.SetPiece('p', "e5")
+	pos.SetPiece('r', "c5")
 	captures := pos.GenerateWhitePawnCaptures()
 	expectedMoves := map[string]bool{
 		"d4e5": true,
@@ -120,9 +120,9 @@ func TestGenerateWhitePawnCaptures(t *testing.T) {
 	assertEqualMoves(t, captures, expectedMoves)
 
 	pos = Position{}
-	pos.SetPiece("P", "c3")
-	pos.SetPiece("P", "d4") // make sure we can't capture our own piece
-	pos.SetPiece("b", "b4")
+	pos.SetPiece('P', "c3")
+	pos.SetPiece('P', "d4") // make sure we can't capture our own piece
+	pos.SetPiece('b', "b4")
 	captures = pos.GenerateWhitePawnCaptures()
 	if len(captures) != 1 {
 		t.Errorf("expected white pawn on c3 to have 1 possible capture, but got %d", len(captures))
@@ -130,8 +130,8 @@ func TestGenerateWhitePawnCaptures(t *testing.T) {
 
 	// 'a' file captures
 	pos = Position{}
-	pos.SetPiece("P", "a3")
-	pos.SetPiece("q", "b4")
+	pos.SetPiece('P', "a3")
+	pos.SetPiece('q', "b4")
 	captures = pos.GenerateWhitePawnCaptures()
 	if len(captures) != 1 {
 		t.Errorf("expected white pawn on a3 to have 1 possible capture, but got %d", len(captures))
@@ -139,13 +139,13 @@ func TestGenerateWhitePawnCaptures(t *testing.T) {
 
 	// h file captures
 	pos = Position{}
-	pos.SetPiece("P", "h7")
-	pos.SetPiece("q", "g8")
+	pos.SetPiece('P', "h6")
+	pos.SetPiece('q', "g7")
 	captures = pos.GenerateWhitePawnCaptures()
 	if len(captures) != 1 {
-		t.Errorf("expected white pawn on h7 to have 1 possible capture, but got %d", len(captures))
+		t.Errorf("expected white pawn on h6 to have 1 possible capture, but got %d", len(captures))
 	}
-	expected := "h7g8"
+	expected := "h6g7"
 	move := ToUCINotation(captures[0])
 	if move != expected {
 		t.Errorf("expected capture move %s but got %s", expected, move)
@@ -154,9 +154,9 @@ func TestGenerateWhitePawnCaptures(t *testing.T) {
 
 func TestGenerateBlackPawnCaptures(t *testing.T) {
 	pos := Position{}
-	pos.SetPiece("p", "d5")
-	pos.SetPiece("P", "e4")
-	pos.SetPiece("N", "c4")
+	pos.SetPiece('p', "d5")
+	pos.SetPiece('P', "e4")
+	pos.SetPiece('N', "c4")
 	captures := pos.GenerateBlackPawnCaptures()
 	expectedMoves := map[string]bool{
 		"d5e4": true,
@@ -165,9 +165,9 @@ func TestGenerateBlackPawnCaptures(t *testing.T) {
 	assertEqualMoves(t, captures, expectedMoves)
 
 	pos = Position{}
-	pos.SetPiece("p", "c4")
-	pos.SetPiece("p", "d3") // make sure we can't capture our own piece
-	pos.SetPiece("B", "b3")
+	pos.SetPiece('p', "c4")
+	pos.SetPiece('p', "d3") // make sure we can't capture our own piece
+	pos.SetPiece('B', "b3")
 	captures = pos.GenerateBlackPawnCaptures()
 	if len(captures) != 1 {
 		t.Errorf("expected black pawn on c4 to have 1 possible capture, but got %d", len(captures))
@@ -175,8 +175,8 @@ func TestGenerateBlackPawnCaptures(t *testing.T) {
 
 	// 'a' file captures
 	pos = Position{}
-	pos.SetPiece("p", "a6")
-	pos.SetPiece("Q", "b5")
+	pos.SetPiece('p', "a6")
+	pos.SetPiece('Q', "b5")
 	captures = pos.GenerateBlackPawnCaptures()
 	if len(captures) != 1 {
 		t.Errorf("expected black pawn on a6 to have 1 possible capture, but got %d", len(captures))
@@ -184,13 +184,13 @@ func TestGenerateBlackPawnCaptures(t *testing.T) {
 
 	// h file captures
 	pos = Position{}
-	pos.SetPiece("p", "h2")
-	pos.SetPiece("Q", "g1")
+	pos.SetPiece('p', "h3")
+	pos.SetPiece('Q', "g2")
 	captures = pos.GenerateBlackPawnCaptures()
 	if len(captures) != 1 {
 		t.Errorf("expected black pawn on h2 to have 1 possible capture, but got %d", len(captures))
 	}
-	expected := "h2g1"
+	expected := "h3g2"
 	move := ToUCINotation(captures[0])
 	if move != expected {
 		t.Errorf("expected capture move %s but got %s", expected, move)
@@ -200,7 +200,7 @@ func TestGenerateBlackPawnCaptures(t *testing.T) {
 func TestGenerateWhitePawnEnPassant(t *testing.T) {
 	// right capture en passant
 	pos := Position{}
-	pos.SetPiece("P", "d5")
+	pos.SetPiece('P', "d5")
 	pos.SetEnPassantTarget("e6")
 
 	moves := pos.GenerateWhitePawnCaptures()
@@ -214,7 +214,7 @@ func TestGenerateWhitePawnEnPassant(t *testing.T) {
 
 	// left capture en passant
 	pos = Position{}
-	pos.SetPiece("P", "d5")
+	pos.SetPiece('P', "d5")
 	pos.SetEnPassantTarget("c6")
 
 	moves = pos.GenerateWhitePawnCaptures()
@@ -230,7 +230,7 @@ func TestGenerateWhitePawnEnPassant(t *testing.T) {
 func TestGenerateBlackPawnEnPassant(t *testing.T) {
 	// left capture en passant
 	pos := Position{}
-	pos.SetPiece("p", "d4")
+	pos.SetPiece('p', "d4")
 	pos.SetEnPassantTarget("c3")
 
 	moves := pos.GenerateBlackPawnCaptures()
@@ -243,7 +243,7 @@ func TestGenerateBlackPawnEnPassant(t *testing.T) {
 	}
 
 	pos = Position{}
-	pos.SetPiece("p", "d4")
+	pos.SetPiece('p', "d4")
 	pos.SetEnPassantTarget("e3")
 
 	moves = pos.GenerateBlackPawnCaptures()
@@ -252,5 +252,111 @@ func TestGenerateBlackPawnEnPassant(t *testing.T) {
 
 	if actual != expected {
 		t.Errorf("expected %s but got %s", expected, actual)
+	}
+}
+
+func TestGenerateWhitePawnPromotions(t *testing.T) {
+	for file := 'a'; file <= 'h'; file++ {
+		pos := Position{}
+		pos.SetPiece('P', string(file)+"7")
+		moves := pos.GenerateWhitePawnMoves()
+
+		if len(moves) != 4 {
+			t.Errorf("expected to generate 4 promotion moves")
+		}
+
+		for i, p := range []byte{'r', 'q', 'k', 'b'} {
+			promo := moves[i].Promo
+			if promo != p {
+				t.Errorf("expected promotion type to be %c but got %c", p, promo)
+			}
+		}
+	}
+}
+
+func TestGenerateBlackPawnPromotions(t *testing.T) {
+	for file := 'a'; file <= 'h'; file++ {
+		pos := Position{}
+		pos.SetPiece('p', string(file)+"2")
+		moves := pos.GenerateBlackPawnMoves()
+
+		if len(moves) != 4 {
+			t.Errorf("expected to generate 4 promotion moves")
+		}
+
+		for i, p := range []byte{'r', 'q', 'k', 'b'} {
+			promo := moves[i].Promo
+			if promo != p {
+				t.Errorf("expected promotion type to be %c but got %c", p, promo)
+			}
+		}
+	}
+}
+
+func TestGenerateWhitePromoteWithCapture(t *testing.T) {
+	// capture and promote right
+	pos := Position{}
+	pos.SetPiece('P', "a7")
+	pos.SetPiece('n', "b8")
+	moves := pos.GenerateWhitePawnCaptures()
+	if len(moves) != 4 {
+		t.Errorf("expected to generate 4 promotion moves but got %d", len(moves))
+	}
+
+	for i, p := range []byte{'r', 'q', 'k', 'b'} {
+		promo := moves[i].Promo
+		if promo != p {
+			t.Errorf("expected promotion type to be %c but got %c", p, promo)
+		}
+	}
+
+	// capture and promote left
+	pos = Position{}
+	pos.SetPiece('P', "h7")
+	pos.SetPiece('r', "g8")
+	moves = pos.GenerateWhitePawnCaptures()
+	if len(moves) != 4 {
+		t.Errorf("expected to generate 4 promotion moves but got %d", len(moves))
+	}
+
+	for i, p := range []byte{'r', 'q', 'k', 'b'} {
+		promo := moves[i].Promo
+		if promo != p {
+			t.Errorf("expected promotion type to be %c but got %c", p, promo)
+		}
+	}
+}
+
+func TestGenerateBlackPromoteWithCapture(t *testing.T) {
+	// capture and promote right
+	pos := Position{}
+	pos.SetPiece('p', "a2")
+	pos.SetPiece('N', "b1")
+	moves := pos.GenerateBlackPawnCaptures()
+	if len(moves) != 4 {
+		t.Errorf("expected to generate 4 promotion moves but got %d", len(moves))
+	}
+
+	for i, p := range []byte{'r', 'q', 'k', 'b'} {
+		promo := moves[i].Promo
+		if promo != p {
+			t.Errorf("expected promotion type to be %c but got %c", p, promo)
+		}
+	}
+
+	// capture and promote left
+	pos = Position{}
+	pos.SetPiece('p', "h2")
+	pos.SetPiece('R', "g1")
+	moves = pos.GenerateBlackPawnCaptures()
+	if len(moves) != 4 {
+		t.Errorf("expected to generate 4 promotion moves but got %d", len(moves))
+	}
+
+	for i, p := range []byte{'r', 'q', 'k', 'b'} {
+		promo := moves[i].Promo
+		if promo != p {
+			t.Errorf("expected promotion type to be %c but got %c", p, promo)
+		}
 	}
 }

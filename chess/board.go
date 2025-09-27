@@ -7,9 +7,9 @@ import (
 type Bitboard uint64
 
 type Move struct {
-	From int
-	To   int
-	// Promo rune // handle later
+	From  int
+	To    int
+	Promo byte
 }
 
 type Position struct {
@@ -30,7 +30,7 @@ type Position struct {
 	EnPassantTarget Bitboard
 
 	// for O(1) lookups of pieces on a given square
-	PieceMap [64]string
+	PieceMap [64]byte
 }
 
 func NewPosition() *Position {
@@ -51,15 +51,15 @@ func NewPosition() *Position {
 
 		EnPassantTarget: 0,
 
-		PieceMap: [64]string{
-			"R", "N", "B", "Q", "K", "B", "N", "R",
-			"P", "P", "P", "P", "P", "P", "P", "P",
-			"", "", "", "", "", "", "", "",
-			"", "", "", "", "", "", "", "",
-			"", "", "", "", "", "", "", "",
-			"", "", "", "", "", "", "", "",
-			"p", "p", "p", "p", "p", "p", "p", "p",
-			"r", "n", "b", "q", "k", "b", "n", "r",
+		PieceMap: [64]byte{
+			'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R',
+			'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P',
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
+			'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p',
+			'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r',
 		},
 	}
 }
@@ -72,7 +72,7 @@ func (p *Position) BlackPieces() Bitboard {
 	return p.BlackBishops | p.BlackKing | p.BlackKnights | p.BlackPawns | p.BlackRooks | p.BlackQueens
 }
 
-func (p *Position) SetPiece(piece, square string) {
+func (p *Position) SetPiece(piece byte, square string) {
 	index := RankFileToBitIndex(square[0], square[1])
 	mask := Bitboard(1) << index
 
@@ -81,29 +81,29 @@ func (p *Position) SetPiece(piece, square string) {
 	}
 
 	switch piece {
-	case "P":
+	case 'P':
 		p.WhitePawns |= mask
-	case "R":
+	case 'R':
 		p.WhiteRooks |= mask
-	case "N":
+	case 'N':
 		p.WhiteKnights |= mask
-	case "B":
+	case 'B':
 		p.WhiteBishops |= mask
-	case "Q":
+	case 'Q':
 		p.WhiteQueens |= mask
-	case "K":
+	case 'K':
 		p.WhiteKing |= mask
-	case "p":
+	case 'p':
 		p.BlackPawns |= mask
-	case "r":
+	case 'r':
 		p.BlackRooks |= mask
-	case "n":
+	case 'n':
 		p.BlackKnights |= mask
-	case "b":
+	case 'b':
 		p.BlackBishops |= mask
-	case "q":
+	case 'q':
 		p.BlackQueens |= mask
-	case "k":
+	case 'k':
 		p.BlackKing |= mask
 	default:
 		panic("Piece type unknown!")
@@ -118,77 +118,77 @@ func (p *Position) RemovePiece(square string) {
 
 	if p.WhitePawns&mask != 0 {
 		p.WhitePawns &^= mask
-		p.PieceMap[index] = ""
+		p.PieceMap[index] = 0
 		return
 	}
 	if p.WhiteKnights&mask != 0 {
 		p.WhiteKnights &^= mask
-		p.PieceMap[index] = ""
+		p.PieceMap[index] = 0
 		return
 	}
 	if p.WhiteBishops&mask != 0 {
 		p.WhiteBishops &^= mask
-		p.PieceMap[index] = ""
+		p.PieceMap[index] = 0
 		return
 	}
 	if p.WhiteRooks&mask != 0 {
 		p.WhiteRooks &^= mask
-		p.PieceMap[index] = ""
+		p.PieceMap[index] = 0
 		return
 	}
 	if p.WhiteQueens&mask != 0 {
 		p.WhiteQueens &^= mask
-		p.PieceMap[index] = ""
+		p.PieceMap[index] = 0
 		return
 	}
 	if p.WhiteKing&mask != 0 {
 		p.WhiteKing &^= mask
-		p.PieceMap[index] = ""
+		p.PieceMap[index] = 0
 		return
 	}
 
 	if p.BlackPawns&mask != 0 {
 		p.BlackPawns &^= mask
-		p.PieceMap[index] = ""
+		p.PieceMap[index] = 0
 		return
 	}
 	if p.BlackKnights&mask != 0 {
 		p.BlackKnights &^= mask
-		p.PieceMap[index] = ""
+		p.PieceMap[index] = 0
 		return
 	}
 	if p.BlackBishops&mask != 0 {
 		p.BlackBishops &^= mask
-		p.PieceMap[index] = ""
+		p.PieceMap[index] = 0
 		return
 	}
 	if p.BlackRooks&mask != 0 {
 		p.BlackRooks &^= mask
-		p.PieceMap[index] = ""
+		p.PieceMap[index] = 0
 		return
 	}
 	if p.BlackQueens&mask != 0 {
 		p.BlackQueens &^= mask
-		p.PieceMap[index] = ""
+		p.PieceMap[index] = 0
 		return
 	}
 	if p.BlackKing&mask != 0 {
 		p.BlackKing &^= mask
-		p.PieceMap[index] = ""
+		p.PieceMap[index] = 0
 		return
 	}
 }
 
-func (p *Position) GetPieceOnSquare(square string) (piece string, empty bool) {
+func (p *Position) GetPieceOnSquare(square string) (piece byte, empty bool) {
 	index := RankFileToBitIndex(square[0], square[1])
 
 	piece = p.PieceMap[index]
 
-	if piece != "" {
+	if piece != 0 {
 		return piece, false
 	}
 
-	return "", true
+	return 0, true
 }
 
 func (p *Position) SetEnPassantTarget(square string) {
@@ -220,76 +220,126 @@ func ToUCINotation(move Move) string {
 	return fmt.Sprintf("%s%s", from, to)
 }
 
-func parseMove(move string) (from, to, promotionType int) {
+func parseMove(move string) (from, to int, promotionType byte) {
 	from = RankFileToBitIndex(move[0], move[1])
 	to = RankFileToBitIndex(move[2], move[3])
-	promotionType = -1 // figure out how to handle this later when implementing promotions
+
+	if len(move) == 5 {
+		promotionType = move[4]
+	}
+
 	return
 }
 
-func (p *Position) applyPawnMove(toMask, fromMask Bitboard, to, from int) {
-	diff := abs(to - from)
-	isPush := diff == 8 || diff == 16
-	// TODO: set en passant target square
-	if p.WhitePawns&fromMask != 0 {
-		p.WhitePawns &^= fromMask
-		p.WhitePawns |= toMask
-
-		if !isPush {
-			if toMask == p.EnPassantTarget {
-				capIdx := to - 8
-				p.BlackPawns &^= Bitboard(1) << capIdx
-				p.PieceMap[capIdx] = ""
-			} else {
-				p.BlackPawns &^= toMask
-			}
-		}
-
-		p.PieceMap[to] = "P"
-		p.PieceMap[from] = ""
-	} else if p.BlackPawns&fromMask != 0 {
-		p.BlackPawns &^= fromMask
-		p.BlackPawns |= toMask
-		if !isPush {
-			if toMask == p.EnPassantTarget {
-				capIdx := to + 8
-				p.WhitePawns &^= Bitboard(1) << capIdx
-				p.PieceMap[capIdx] = ""
-			} else {
-				p.WhitePawns &^= toMask
-			}
-			p.WhitePawns &^= toMask
-		}
-
-		p.PieceMap[to] = "p"
-		p.PieceMap[from] = ""
+// for converting uci promotion chars to uppercase
+func ToUpper(b byte) byte {
+	if b >= 'a' && b <= 'z' {
+		return b - 'a' + 'A'
 	}
+	return b
 }
 
-// What the update function needs to do
-// Parse the move string (e.g. "e2e4" → source square e2, destination square e4).
-// Find which piece is moving by checking which bitboard has the source square bit set.
-// Clear the source square bit in that piece’s bitboard.
-// Set the destination square bit in the same piece’s bitboard.
-// Handle captures: if the destination square was occupied by an opponent’s piece, clear that square from the opponent’s bitboard.
-// Handle promotions, castling, and en passant (later).
+func (p *Position) applyPromotion(promotion byte, to int, toMask Bitboard) {
+	switch promotion {
+	case 'Q':
+		p.WhiteQueens |= toMask
+	case 'B':
+		p.WhiteBishops |= toMask
+	case 'N':
+		p.WhiteKnights |= toMask
+	case 'R':
+		p.WhiteRooks |= toMask
+	case 'q':
+		p.BlackQueens |= toMask
+	case 'b':
+		p.BlackBishops |= toMask
+	case 'n':
+		p.BlackKnights |= toMask
+	case 'r':
+		p.BlackRooks |= toMask
+	}
+
+	p.PieceMap[to] = promotion
+}
+
+func (p *Position) applyPawnMove(toMask, fromMask Bitboard, to, from int, promotion byte) {
+	diff := abs(to - from)
+	isPush := diff == 8 || diff == 16
+
+	var movingPawns, opponentPawns *Bitboard
+	var pieceChar byte
+	var enPassantOffset int
+
+	if p.WhitePawns&fromMask != 0 {
+		movingPawns = &p.WhitePawns
+		opponentPawns = &p.BlackPawns
+		pieceChar = 'P'
+		enPassantOffset = -8
+	} else if p.BlackPawns&fromMask != 0 {
+		movingPawns = &p.BlackPawns
+		opponentPawns = &p.WhitePawns
+		pieceChar = 'p'
+		enPassantOffset = 8
+	}
+
+	*movingPawns &^= fromMask
+
+	if !isPush {
+		if toMask == p.EnPassantTarget {
+			capIdx := to + enPassantOffset
+			*opponentPawns &^= Bitboard(1) << capIdx
+			p.PieceMap[capIdx] = 0
+		} else {
+			if pieceChar == 'P' {
+				p.BlackPawns &^= toMask
+				p.BlackKnights &^= toMask
+				p.BlackBishops &^= toMask
+				p.BlackRooks &^= toMask
+				p.BlackQueens &^= toMask
+			} else {
+				p.WhitePawns &^= toMask
+				p.WhiteKnights &^= toMask
+				p.WhiteBishops &^= toMask
+				p.WhiteRooks &^= toMask
+				p.WhiteQueens &^= toMask
+			}
+		}
+	}
+
+	isBackRank := to/8 == 7
+	isFirstRank := to/8 == 0
+
+	if isBackRank {
+		promotion = ToUpper(promotion)
+	}
+
+	if isBackRank || isFirstRank {
+		p.applyPromotion(promotion, to, toMask)
+	} else {
+		*movingPawns |= toMask
+		p.PieceMap[to] = pieceChar
+	}
+
+	p.PieceMap[from] = 0
+}
+
 func (p *Position) ApplyMove(move string) {
-	from, to, _ := parseMove(move)
+	from, to, promotion := parseMove(move)
 	fromMask := Bitboard(1) << from
 	toMask := Bitboard(1) << to
 	pieceMoving := p.PieceMap[from]
 
 	switch pieceMoving {
-	case "P", "p":
-		p.applyPawnMove(toMask, fromMask, to, from)
+	case 'P', 'p':
+		p.applyPawnMove(toMask, fromMask, to, from, promotion)
 	default:
 		panic("unexpected piece type")
 	}
 
 	diff := abs(to - from)
-	if pieceMoving == "P" && diff == 16 { // white double push
+	if pieceMoving == 'P' && diff == 16 { // white double push
 		p.EnPassantTarget = 1 << (from + 8)
-	} else if pieceMoving == "p" && diff == 16 { // black double push
+	} else if pieceMoving == 'p' && diff == 16 { // black double push
 		p.EnPassantTarget = 1 << (from - 8)
 	} else {
 		p.EnPassantTarget = 0 // clear for all other moves
@@ -301,4 +351,21 @@ func abs(x int) int {
 		return -x
 	}
 	return x
+}
+
+// for debugging
+func PrintBitboard(bb uint64) {
+	for rank := 7; rank >= 0; rank-- {
+		for file := 0; file < 8; file++ {
+			sq := rank*8 + file
+			mask := uint64(1) << sq
+			if bb&mask != 0 {
+				fmt.Print("1 ")
+			} else {
+				fmt.Print("0 ")
+			}
+		}
+		fmt.Println()
+	}
+	fmt.Println()
 }
