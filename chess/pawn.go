@@ -97,9 +97,6 @@ func (p *Position) GenerateBlackPawnMoves() []Move {
 func (p *Position) GenerateWhitePawnCaptures() []Move {
 	var moves []Move
 
-	aFile := Bitboard(0x0101010101010101)
-	hFile := Bitboard(0x8080808080808080)
-
 	generateCaptures := func(captures Bitboard, offset int) {
 		for captures != 0 {
 			to := bits.TrailingZeros64(uint64(captures))
@@ -114,8 +111,8 @@ func (p *Position) GenerateWhitePawnCaptures() []Move {
 		}
 	}
 
-	leftCaptures := ((p.WhitePawns &^ aFile) << 7) & (p.BlackPieces() | p.EnPassantTarget)
-	rightCaptures := ((p.WhitePawns &^ hFile) << 9) & (p.BlackPieces() | p.EnPassantTarget)
+	leftCaptures := ((p.WhitePawns &^ A_File) << 7) & (p.BlackPieces() | p.EnPassantTarget)
+	rightCaptures := ((p.WhitePawns &^ H_File) << 9) & (p.BlackPieces() | p.EnPassantTarget)
 
 	generateCaptures(leftCaptures, 7)
 	generateCaptures(rightCaptures, 9)

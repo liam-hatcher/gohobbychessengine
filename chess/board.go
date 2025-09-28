@@ -203,41 +203,34 @@ func (p *Position) GetEmptySquares() Bitboard {
 	return ^p.GetOccupiedSquares()
 }
 
-func BitIndexToRankFile(index int) string {
-	file := index % 8
-	rank := index / 8
-	return string(rune('a'+file)) + string(rune('1'+rank))
+func AtBounds(index int) bool {
+	leftBound := index%8 == 0
+	rightBound := index%8 == 7
+	upperBound := index/8 == 7
+	lowerBound := index/8 == 0
+
+	return leftBound || rightBound || upperBound || lowerBound
 }
 
-func RankFileToBitIndex(file byte, rank byte) int {
-	return int((rank-'1')*8 + (file - 'a'))
-}
+// func (p *Position) GenerateRay(from int, delta int) []int {
+// 	var friendly, enemy Bitboard
 
-func ToUCINotation(move Move) string {
-	from := BitIndexToRankFile(move.From)
-	to := BitIndexToRankFile(move.To)
+// 	isWhite := p.PieceMap[from] == ToUpper(p.PieceMap[from])
 
-	return fmt.Sprintf("%s%s", from, to)
-}
+// 	if isWhite {
+// 		friendly = p.WhitePieces()
+// 		enemy = p.BlackPieces()
+// 	} else {
+// 		enemy = p.WhitePieces()
+// 		friendly = p.BlackPieces()
+// 	}
 
-func parseMove(move string) (from, to int, promotionType byte) {
-	from = RankFileToBitIndex(move[0], move[1])
-	to = RankFileToBitIndex(move[2], move[3])
+// 	var reachableSquares []int
 
-	if len(move) == 5 {
-		promotionType = move[4]
-	}
+// 	for {
 
-	return
-}
-
-// for converting uci promotion chars to uppercase
-func ToUpper(b byte) byte {
-	if b >= 'a' && b <= 'z' {
-		return b - 'a' + 'A'
-	}
-	return b
-}
+// 	}
+// }
 
 func (p *Position) applyPromotion(promotion byte, to int, toMask Bitboard) {
 	switch promotion {
@@ -263,7 +256,7 @@ func (p *Position) applyPromotion(promotion byte, to int, toMask Bitboard) {
 }
 
 func (p *Position) applyPawnMove(toMask, fromMask Bitboard, to, from int, promotion byte) {
-	diff := abs(to - from)
+	diff := Abs(to - from)
 	isPush := diff == 8 || diff == 16
 
 	var movingPawns, opponentPawns *Bitboard
@@ -324,7 +317,7 @@ func (p *Position) applyPawnMove(toMask, fromMask Bitboard, to, from int, promot
 }
 
 func (p *Position) ApplyMove(move string) {
-	from, to, promotion := parseMove(move)
+	from, to, promotion := ParseMove(move)
 	fromMask := Bitboard(1) << from
 	toMask := Bitboard(1) << to
 	pieceMoving := p.PieceMap[from]
@@ -336,7 +329,7 @@ func (p *Position) ApplyMove(move string) {
 		panic("unexpected piece type")
 	}
 
-	diff := abs(to - from)
+	diff := Abs(to - from)
 	if pieceMoving == 'P' && diff == 16 { // white double push
 		p.EnPassantTarget = 1 << (from + 8)
 	} else if pieceMoving == 'p' && diff == 16 { // black double push
@@ -344,28 +337,4 @@ func (p *Position) ApplyMove(move string) {
 	} else {
 		p.EnPassantTarget = 0 // clear for all other moves
 	}
-}
-
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
-// for debugging
-func PrintBitboard(bb uint64) {
-	for rank := 7; rank >= 0; rank-- {
-		for file := 0; file < 8; file++ {
-			sq := rank*8 + file
-			mask := uint64(1) << sq
-			if bb&mask != 0 {
-				fmt.Print("1 ")
-			} else {
-				fmt.Print("0 ")
-			}
-		}
-		fmt.Println()
-	}
-	fmt.Println()
 }
