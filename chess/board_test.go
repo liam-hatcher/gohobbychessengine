@@ -362,3 +362,69 @@ func TestPawnCaptureAndPromote(t *testing.T) {
 		t.Errorf("expected white queen bitboard to be set")
 	}
 }
+
+func TestWhiteRookMoves(t *testing.T) {
+	pos := Position{
+		WhiteCastlingRights: CastlingRights{
+			Short: true,
+			Long:  true,
+		},
+	}
+	pos.SetPiece('R', "a1")
+	pos.SideToMove = "white"
+
+	from := "a1"
+	to := "a8"
+
+	// Preconditions
+	assertHasPiece(t, &pos, 'R', from)
+	assertEmpty(t, &pos, to)
+
+	// Apply rook move
+	pos.ApplyMove(from + to)
+
+	// Postconditions
+	assertEmpty(t, &pos, from)
+	assertHasPiece(t, &pos, 'R', to)
+
+	// Castling rights: moving rook from a1 disables white's long castle
+	if pos.WhiteCastlingRights.Long {
+		t.Errorf("Expected long castling rights to be false after moving rook from a1")
+	}
+	if !pos.WhiteCastlingRights.Short {
+		t.Errorf("Expected short castling rights to remain true after rook move from a1")
+	}
+}
+
+func TestBlackRookMoves(t *testing.T) {
+	pos := Position{
+		BlackCastlingRights: CastlingRights{
+			Short: true,
+			Long:  true,
+		},
+	}
+	pos.SetPiece('r', "h8")
+	pos.SideToMove = "black"
+
+	from := "h8"
+	to := "h1"
+
+	// Preconditions
+	assertHasPiece(t, &pos, 'r', from)
+	assertEmpty(t, &pos, to)
+
+	// Apply rook move
+	pos.ApplyMove(from + to)
+
+	// Postconditions
+	assertEmpty(t, &pos, from)
+	assertHasPiece(t, &pos, 'r', to)
+
+	// Castling rights: moving rook from a1 disables white's long castle
+	if pos.BlackCastlingRights.Short {
+		t.Errorf("Expected short castling rights to be false after moving rook from h8")
+	}
+	if !pos.BlackCastlingRights.Long {
+		t.Errorf("Expected long castling rights to remain true after rook move from h8")
+	}
+}

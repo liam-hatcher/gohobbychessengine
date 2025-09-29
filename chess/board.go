@@ -50,6 +50,10 @@ func NewPosition() *Position {
 		WhiteBishops: 0x0000000000000024,
 		WhiteQueens:  0x0000000000000008,
 		WhiteKing:    0x0000000000000010,
+		WhiteCastlingRights: CastlingRights{
+			Short: true,
+			Long:  true,
+		},
 
 		BlackPawns:   0x00FF000000000000,
 		BlackRooks:   0x8100000000000000,
@@ -57,6 +61,10 @@ func NewPosition() *Position {
 		BlackBishops: 0x2400000000000000,
 		BlackQueens:  0x0800000000000000,
 		BlackKing:    0x1000000000000000,
+		BlackCastlingRights: CastlingRights{
+			Short: true,
+			Long:  true,
+		},
 
 		EnPassantTarget: 0,
 
@@ -246,6 +254,22 @@ func (p *Position) applyPromotion(promotion byte, to int, toMask Bitboard) {
 	p.PieceMap[to] = promotion
 }
 
+func (p *Position) CaptureBlack(toMask Bitboard) {
+	p.BlackPawns &^= toMask
+	p.BlackKnights &^= toMask
+	p.BlackBishops &^= toMask
+	p.BlackRooks &^= toMask
+	p.BlackQueens &^= toMask
+}
+
+func (p *Position) CaptureWhite(toMask Bitboard) {
+	p.WhitePawns &^= toMask
+	p.WhiteKnights &^= toMask
+	p.WhiteBishops &^= toMask
+	p.WhiteRooks &^= toMask
+	p.WhiteQueens &^= toMask
+}
+
 func (p *Position) applyPawnMove(toMask, fromMask Bitboard, to, from int, promotion byte) {
 	diff := Abs(to - from)
 	isPush := diff == 8 || diff == 16
@@ -275,17 +299,9 @@ func (p *Position) applyPawnMove(toMask, fromMask Bitboard, to, from int, promot
 			p.PieceMap[capIdx] = 0
 		} else {
 			if pieceChar == 'P' {
-				p.BlackPawns &^= toMask
-				p.BlackKnights &^= toMask
-				p.BlackBishops &^= toMask
-				p.BlackRooks &^= toMask
-				p.BlackQueens &^= toMask
+				p.CaptureBlack(toMask)
 			} else {
-				p.WhitePawns &^= toMask
-				p.WhiteKnights &^= toMask
-				p.WhiteBishops &^= toMask
-				p.WhiteRooks &^= toMask
-				p.WhiteQueens &^= toMask
+				p.CaptureWhite(toMask)
 			}
 		}
 	}
@@ -315,7 +331,7 @@ func (p *Position) changeTurn() {
 	}
 }
 
-func (p *Position) updateEnpassantState(pieceMoving byte, from, to int) {
+func (p *Position) updateEnpassantState(pieceMoving byte, to, from int) {
 	diff := Abs(to - from)
 	if pieceMoving == 'P' && diff == 16 { // white double push
 		p.EnPassantTarget = 1 << (from + 8)
@@ -323,6 +339,32 @@ func (p *Position) updateEnpassantState(pieceMoving byte, from, to int) {
 		p.EnPassantTarget = 1 << (from - 8)
 	} else {
 		p.EnPassantTarget = 0 // clear for all other moves
+	}
+}
+
+func (p *Position) applyRookMove(toMask, fromMask Bitboard, to, from int) {
+	if p.SideToMove == "white" {
+		p.WhiteRooks &^= fromMask
+		p.WhiteRooks |= toMask
+		p.CaptureBlack(toMask)
+		p.PieceMap[to] = 'R'
+	} else {
+		p.BlackRooks &^= fromMask
+		p.BlackRooks |= toMask
+		p.CaptureWhite(toMask)
+		p.PieceMap[to] = 'r'
+	}
+	p.PieceMap[from] = 0
+
+	switch from {
+	case 0:
+		p.WhiteCastlingRights.Long = false
+	case 7:
+		p.WhiteCastlingRights.Short = false
+	case 56:
+		p.BlackCastlingRights.Long = false
+	case 63:
+		p.BlackCastlingRights.Short = false
 	}
 }
 
@@ -335,11 +377,13 @@ func (p *Position) ApplyMove(move string) {
 	switch pieceMoving {
 	case 'P', 'p':
 		p.applyPawnMove(toMask, fromMask, to, from, promotion)
+	case 'R', 'r':
+		p.applyRookMove(toMask, fromMask, to, from)
 	default:
 		panic("unexpected piece type")
 	}
 
-	p.updateEnpassantState(pieceMoving, from, to)
+	p.updateEnpassantState(pieceMoving, to, from)
 
 	p.changeTurn()
 }
