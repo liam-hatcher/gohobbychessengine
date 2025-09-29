@@ -112,3 +112,50 @@ func TestRookRelevantBits(t *testing.T) {
 		}
 	}
 }
+
+func TestMagicIndex(t *testing.T) {
+	pos := Position{}
+	square := "a1"
+	pos.SetPiece('R', square)
+
+	sqIdx := RankFileToBitIndex(square[0], square[1])
+	mask := RookMasks[sqIdx]
+	magic := RookMagics[sqIdx]
+	relevantBits := RookRelevantBitsMap[sqIdx]
+
+	occupancy := pos.GetOccupiedSquares()
+	magicIndex := MagicIndex(sqIdx, occupancy, mask, magic, relevantBits)
+	actual := RookAttackTables[sqIdx][magicIndex]
+
+	expected := Bitboard(0x01010101010101FE)
+	if actual != expected {
+		t.Errorf("a1 empty: got\n%s, expected\n%s", ToString(actual), ToString(expected))
+		t.Errorf("expected hex: %#x, actual: %#x", expected, actual)
+	}
+
+	// Case 2: add blocker on a3
+	pos.SetPiece('P', "a3")
+	occupancy = pos.GetOccupiedSquares()
+	magicIndex = MagicIndex(sqIdx, occupancy, mask, magic, relevantBits)
+	actual = RookAttackTables[sqIdx][magicIndex]
+
+	// Expected: rook sees a2 and a3, plus rank 1 to the right
+	expected = Bitboard(0x101fe)
+	if actual != expected {
+		t.Errorf("a1 with blocker a3: got\n%s, expected\n%s", ToString(actual), ToString(expected))
+		t.Errorf("expected hex: %#x, actual: %#x", expected, actual)
+	}
+
+	// Case 3: add another blocker on c1
+	pos.SetPiece('P', "c1")
+	occupancy = pos.GetOccupiedSquares()
+	magicIndex = MagicIndex(sqIdx, occupancy, mask, magic, relevantBits)
+	actual = RookAttackTables[sqIdx][magicIndex]
+
+	// Expected: rook can go right to b1 (blocked at c1), up to a3
+	expected = Bitboard(0x10106)
+	if actual != expected {
+		t.Errorf("a1 with blockers a3+c1: got\n%s, expected\n%s", ToString(actual), ToString(expected))
+		t.Errorf("expected hex: %#x, actual: %#x", expected, actual)
+	}
+}

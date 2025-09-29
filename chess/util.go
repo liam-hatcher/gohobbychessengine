@@ -2,6 +2,7 @@ package chess
 
 import (
 	"fmt"
+	"math/bits"
 	"strings"
 )
 
@@ -87,4 +88,11 @@ func ParseMove(move string) (from, to int, promotionType byte) {
 	}
 
 	return
+}
+
+func PopLSB(bb *Bitboard) int {
+	lsb := *bb & -*bb                           // isolate least significant bit
+	square := bits.TrailingZeros64(uint64(lsb)) // returns 0-63
+	*bb &= *bb - 1                              // clear the LSB
+	return square
 }

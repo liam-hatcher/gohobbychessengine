@@ -67,7 +67,40 @@ func generateRookMagicFile() {
 	fmt.Fprintln(f, "}")
 	log.Info("Rook attack tables written to rook_magics.go")
 
+	log.Info("Generating relevantBits mapping")
+	// Compute relevant bits for each square from the mask
+	relevantBits := make([]int, 64)
+	for sq := 0; sq < 64; sq++ {
+		mask := chess.RookRelevantMask(sq)
+		relevantBits[sq] = chess.PopCount(mask) // popCount = number of 1s in mask
+	}
+
+	// Write rook relevant bits
+	fmt.Fprintln(f, "var RookRelevantBitsMap = [64]int{")
+	for _, rb := range relevantBits {
+		fmt.Fprintf(f, "    %d,\n", rb)
+	}
+	fmt.Fprintln(f, "}")
+	log.Info("Rook relevant bits written to rook_magics.go")
+
 	log.Info("Success!")
+
+	log.Info("Generating rook masks for all 64 squares")
+
+	rookMasks := [64]chess.Bitboard{}
+	for sq := 0; sq < 64; sq++ {
+		mask := chess.RookRelevantMask(sq)
+		rookMasks[sq] = mask
+		log.Debugf("Rook mask for %s = 0x%016X", chess.BitIndexToRankFile(sq), mask)
+	}
+
+	// Write to file
+	fmt.Fprintln(f, "var RookMasks = [64]Bitboard{")
+	for _, mask := range rookMasks {
+		fmt.Fprintf(f, "    0x%016X,\n", mask)
+	}
+	fmt.Fprintln(f, "}")
+	log.Info("Rook masks written to rook_magics.go")
 }
 
 func parseFlags() bool {

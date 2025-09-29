@@ -12,25 +12,34 @@ type Move struct {
 	Promo byte
 }
 
-type Position struct {
-	WhitePawns   Bitboard
-	WhiteKnights Bitboard
-	WhiteBishops Bitboard
-	WhiteRooks   Bitboard
-	WhiteQueens  Bitboard
-	WhiteKing    Bitboard
+type CastlingRights struct {
+	Short bool
+	Long  bool
+}
 
-	BlackPawns   Bitboard
-	BlackKnights Bitboard
-	BlackBishops Bitboard
-	BlackRooks   Bitboard
-	BlackQueens  Bitboard
-	BlackKing    Bitboard
+type Position struct {
+	WhitePawns          Bitboard
+	WhiteKnights        Bitboard
+	WhiteBishops        Bitboard
+	WhiteRooks          Bitboard
+	WhiteQueens         Bitboard
+	WhiteKing           Bitboard
+	WhiteCastlingRights CastlingRights
+
+	BlackPawns          Bitboard
+	BlackKnights        Bitboard
+	BlackBishops        Bitboard
+	BlackRooks          Bitboard
+	BlackQueens         Bitboard
+	BlackKing           Bitboard
+	BlackCastlingRights CastlingRights
 
 	EnPassantTarget Bitboard
 
 	// for O(1) lookups of pieces on a given square
 	PieceMap [64]byte
+
+	SideToMove string
 }
 
 func NewPosition() *Position {
@@ -61,6 +70,8 @@ func NewPosition() *Position {
 			'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p',
 			'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r',
 		},
+
+		SideToMove: "white",
 	}
 }
 
@@ -212,26 +223,6 @@ func AtBounds(index int) bool {
 	return leftBound || rightBound || upperBound || lowerBound
 }
 
-// func (p *Position) GenerateRay(from int, delta int) []int {
-// 	var friendly, enemy Bitboard
-
-// 	isWhite := p.PieceMap[from] == ToUpper(p.PieceMap[from])
-
-// 	if isWhite {
-// 		friendly = p.WhitePieces()
-// 		enemy = p.BlackPieces()
-// 	} else {
-// 		enemy = p.WhitePieces()
-// 		friendly = p.BlackPieces()
-// 	}
-
-// 	var reachableSquares []int
-
-// 	for {
-
-// 	}
-// }
-
 func (p *Position) applyPromotion(promotion byte, to int, toMask Bitboard) {
 	switch promotion {
 	case 'Q':
@@ -316,6 +307,25 @@ func (p *Position) applyPawnMove(toMask, fromMask Bitboard, to, from int, promot
 	p.PieceMap[from] = 0
 }
 
+func (p *Position) changeTurn() {
+	if p.SideToMove == "white" {
+		p.SideToMove = "black"
+	} else {
+		p.SideToMove = "white"
+	}
+}
+
+func (p *Position) updateEnpassantState(pieceMoving byte, from, to int) {
+	diff := Abs(to - from)
+	if pieceMoving == 'P' && diff == 16 { // white double push
+		p.EnPassantTarget = 1 << (from + 8)
+	} else if pieceMoving == 'p' && diff == 16 { // black double push
+		p.EnPassantTarget = 1 << (from - 8)
+	} else {
+		p.EnPassantTarget = 0 // clear for all other moves
+	}
+}
+
 func (p *Position) ApplyMove(move string) {
 	from, to, promotion := ParseMove(move)
 	fromMask := Bitboard(1) << from
@@ -329,12 +339,7 @@ func (p *Position) ApplyMove(move string) {
 		panic("unexpected piece type")
 	}
 
-	diff := Abs(to - from)
-	if pieceMoving == 'P' && diff == 16 { // white double push
-		p.EnPassantTarget = 1 << (from + 8)
-	} else if pieceMoving == 'p' && diff == 16 { // black double push
-		p.EnPassantTarget = 1 << (from - 8)
-	} else {
-		p.EnPassantTarget = 0 // clear for all other moves
-	}
+	p.updateEnpassantState(pieceMoving, from, to)
+
+	p.changeTurn()
 }

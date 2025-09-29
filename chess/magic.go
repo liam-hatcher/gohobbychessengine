@@ -174,7 +174,7 @@ func FindRookMagic(square int, relevantBits uint) uint64 {
 	panic("failed to find magic number")
 }
 
-func popcount(bb Bitboard) int {
+func PopCount(bb Bitboard) int {
 	count := 0
 	for bb != 0 {
 		bb &= bb - 1 // clear lowest set bit
@@ -185,7 +185,7 @@ func popcount(bb Bitboard) int {
 
 func RookRelevantBits(square int) uint {
 	mask := RookRelevantMask(square)
-	return uint(popcount(mask))
+	return uint(PopCount(mask))
 }
 
 func GenerateRookMagic(reportProgress func()) ([64]uint64, [64][]Bitboard) {
@@ -210,4 +210,9 @@ func GenerateRookMagic(reportProgress func()) ([64]uint64, [64][]Bitboard) {
 	}
 
 	return magics, attackTables
+}
+
+// Given a square and occupancy, compute the magic index for a rook or bishop
+func MagicIndex(square int, occupancy Bitboard, mask Bitboard, magic uint64, relevantBits int) int {
+	return int((occupancy & mask) * Bitboard(magic) >> (64 - relevantBits))
 }
